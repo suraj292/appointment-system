@@ -8,6 +8,7 @@ class GuestInvitation extends Model
 {
     protected $fillable = [
         'appointment_id',
+        'name',
         'email',
         'status',
     ];

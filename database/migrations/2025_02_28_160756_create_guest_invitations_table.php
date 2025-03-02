@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('guest_invitations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('appointment_id')->constrained()->onDelete('cascade');
+            $table->string('name')->nullable();
             $table->string('email');
             $table->enum('status', ['Pending', 'Confirmed', 'Declined'])->default('Pending');
             $table->timestamps();

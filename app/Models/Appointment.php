@@ -16,4 +16,19 @@ class Appointment extends Model
         'timezone',
         'status',
     ];
+
+    public function emails()
+    {
+        return $this->hasMany(Email::class);
+    }
+
+    public function reminders()
+    {
+        return $this->hasMany(Reminder::class);
+    }
+
+    public function guestInvitations()
+    {
+        return $this->hasMany(GuestInvitation::class);
+    }
 }
