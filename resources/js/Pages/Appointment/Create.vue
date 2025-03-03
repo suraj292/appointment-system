@@ -26,8 +26,11 @@ const submit = () => {
     }
     form.post(route('appointment.store'), {
         onSuccess: (res) => {
-            if (res.props.error) toast.error(res.props.error);
-            // $inertia.visit(route('appointments.index'));
+            if (res.props.error) {
+                toast.error(res.props.error);
+            } else {
+                toast.success('Appointment created successfully.');
+            }
         },
         onError: (errors) => {
             if (errors.response.status === 422) {
