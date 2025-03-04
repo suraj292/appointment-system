@@ -3,19 +3,18 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import {Head, usePage} from '@inertiajs/vue3';
 import { useToast } from 'vue-toastification';
 import axios from 'axios';
-import { ref } from 'vue';
+import {onMounted, ref} from 'vue';
 
 const toast = useToast();
 
 const { props } = usePage();
-const appointments = props.appointments;
+let appointments = props.appointments;
 const guests = ref([]);
 
 const cancelAppointment = (id) => {
     // console.log(id);
     axios.put(route('appointment.update', { appointment: id, status: 'cancelled' }))
         .then((res) => {
-            console.log(res);
             toast.success('Appointment cancelled successfully.');
 
             appointments.forEach((appointment) => {
@@ -27,14 +26,17 @@ const cancelAppointment = (id) => {
             });
         })
         .catch((error) => {
-            toast.error('Failed to cancel appointment.');
-            console.error(error);
+            toast.error(error.response.data.error);
         });
 };
 
 const showGuests = (appointment) => {
     guests.value = appointment.guest_invitations || [];
+    console.log(guests);
 };
+onMounted(() => {
+    // console.log(appointments);
+});
 </script>
 
 <template>
@@ -78,17 +80,18 @@ const showGuests = (appointment) => {
                             </button>
                         </td>
                     </tr>
+                    <tr v-if="guests != null" :key="`guests-${guests.id}`">
+                        <td colspan="6" class="px-6 py-4">
+                            <ul>
+                                <li><b>Guests</b></li>
+                                <li v-for="guest in guests" :key="guest.id">
+                                    {{ guest.name }} ({{ guest.email }})
+                                </li>
+                            </ul>
+                        </td>
+                    </tr>
                     </tbody>
                 </table>
-
-                <div v-if="guests.value">
-                    <h3 class="text-lg font-semibold leading-tight text-gray-800 mt-6">Guest Invitations</h3>
-                    <ul class="list-disc pl-5">
-                        <li v-for="guest in guests.value" :key="guest.id">
-                            {{ guest.name }} ({{ guest.email }}) - {{ guest.status }}
-                        </li>
-                    </ul>
-                </div>
 
             </div>
         </div>

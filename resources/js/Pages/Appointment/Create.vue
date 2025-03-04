@@ -2,6 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import {Head, useForm} from '@inertiajs/vue3';
 import { useToast } from 'vue-toastification';
+import { Inertia } from '@inertiajs/inertia';
 
 const toast = useToast();
 
@@ -30,9 +31,13 @@ const submit = () => {
                 toast.error(res.props.error);
             } else {
                 toast.success('Appointment created successfully.');
+                Inertia.visit(route('appointment.index'));
             }
         },
         onError: (errors) => {
+            if (errors.appointment_date) {
+                toast.error(errors.appointment_date);
+            }
             if (errors.response.status === 422) {
                 toast.error('Validation error: Please check your input.');
             } else {
@@ -42,8 +47,8 @@ const submit = () => {
     });
 };
 
-const openDatePicker = (event) => {
-    event.target.showPicker();
+const openDatePicker = () => {
+    document.getElementById('start_time').showPicker();
 };
 
 const addGuest = () => {
