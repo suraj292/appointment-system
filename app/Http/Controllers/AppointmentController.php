@@ -6,6 +6,7 @@ use App\Mail\AppointmentBookingCancellationMail;
 use App\Mail\AppointmentBookingMail;
 use App\Models\Appointment;
 use Carbon\Carbon;
+use http\Client\Curl\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -138,5 +139,11 @@ class AppointmentController extends Controller
     {
         $emails = array_merge([auth()->user()->email], $appointment->guestInvitations->pluck('email')->toArray());
         Mail::to($emails)->queue(new AppointmentBookingCancellationMail(null, $appointment, auth()->user()));
+    }
+
+    public function showUserPendingTasks(Request $request)
+    {
+        $user = \App\Models\User::select('name', 'pending_tasks')->withCount('pendingTasks')->find($request->user_id);
+
     }
 }
