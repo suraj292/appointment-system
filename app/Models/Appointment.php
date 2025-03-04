@@ -31,4 +31,14 @@ class Appointment extends Model
     {
         return $this->hasMany(GuestInvitation::class);
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function scopePending()
+    {
+        return $this->where('status', 'Scheduled');
+    }
 }

@@ -5,21 +5,30 @@ namespace App\Http\Controllers;
 use App\Mail\AppointmentBookingCancellationMail;
 use App\Mail\AppointmentBookingMail;
 use App\Models\Appointment;
+use App\Models\Reminder;
 use Carbon\Carbon;
-use http\Client\Curl\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Stevebauman\Location\Facades\Location;
 use Throwable;
-use Torann\GeoIP\GeoIP;
 
 class AppointmentController extends Controller
 {
     public function index()
     {
+        $reminders = DB::table('appointment_reminder_v')
+            ->whereBetween('reminder_time', [
+                Carbon::now()->subMinutes(5)->format('Y-m-d\TH:i'),
+                Carbon::now()->addMinutes(5)->format('Y-m-d\TH:i')
+            ])
+            ->get();
+
+        dd($reminders);
+
         $ip = file_get_contents('https://api64.ipify.org'); // Get the client's IP
         $timezone = Location::get($ip);
         $appointments = auth()->user()->appointments()
@@ -30,6 +39,8 @@ class AppointmentController extends Controller
                 $appointment->date = Carbon::parse($appointment->date_time)->format('d M Y');
                 $appointment->time = Carbon::parse($appointment->date_time)->format('h:i A');
                 $appointment->timezone = $timezone->timezone;
+                $appointment->n = Carbon::now();
+                $appointment->t = Carbon::parse($appointment->date_time);
                 return $appointment;
             });
 
@@ -70,10 +81,10 @@ class AppointmentController extends Controller
             $appointment = Appointment::with('guestInvitations')->find($id);
 
             if ($request->status === 'cancelled') {
-                $currentDateTime = Carbon::now();
-                $appointmentDateTime = Carbon::parse($appointment->date_time);
+                $currentDateTime = Carbon::now()->format('Y-m-d\TH:i');
+                $appointmentDateTime = Carbon::parse($appointment->date_time)->subMinutes(30)->format('Y-m-d\TH:i');
 
-                if ($currentDateTime->diffInMinutes($appointmentDateTime, false) <= 30) {
+                if ($appointmentDateTime > $currentDateTime) {
                     $this->cancelAppointment($appointment);
                     $this->sendCancellationMail($appointment);
 
@@ -83,9 +94,6 @@ class AppointmentController extends Controller
                 }
             }
 
-//            $this->sendCancellationMail($appointment);
-
-//            return Inertia::render('Appointment/Index', ['appointment' => $appointment]);
             return response()->json(['message' => 'Appointment cancelled successfully.'], 200);
         } catch (Throwable $th) {
             Log::info(print_r([$th->getMessage(), $th->getFile(), $th->getLine()], true));
@@ -108,9 +116,16 @@ class AppointmentController extends Controller
         $appointment = auth()->user()->appointments()->create([
             'title' => $request->title,
             'description' => $request->description,
-            'date_time' => $request->appointment_date,
+            'date_time' => Carbon::parse($request->appointment_date)->format('Y-m-d\TH:i'),
             'timezone' => $timezone->timezone,
         ]);
+
+        if ($request->reminder) {
+            $appointment->reminders()->create([
+                'user_id' => auth()->id(),
+                'reminder_time' => Carbon::parse($request->reminder)->format('Y-m-d\TH:i'),
+            ]);
+        }
 
         foreach ($request->guests as $guest) {
             $appointment->guestInvitations()->create([
@@ -143,7 +158,7 @@ class AppointmentController extends Controller
 
     public function showUserPendingTasks(Request $request)
     {
-        $user = \App\Models\User::select('name', 'pending_tasks')->withCount('pendingTasks')->find($request->user_id);
+        $user = \App\Models\User::select('name')->withCount('pendingTasks')->find($request->user_id);
 
     }
 }

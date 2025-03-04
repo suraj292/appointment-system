@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('title');
             $table->text('description')->nullable();
-            $table->dateTime('date_time');
+            $table->string('date_time');
             $table->string('timezone');
             $table->enum('status', ['Scheduled', 'Cancelled'])->default('Scheduled');
             $table->softDeletes();

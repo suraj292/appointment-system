@@ -18,6 +18,7 @@ let appointments = props.appointments || []; // Ensure appointments is an array
 const guests = ref([]);
 
 const cancelAppointment = (id) => {
+    console.log(id);
     axios.put(route('appointment.update', { appointment: id, status: 'cancelled' }))
         .then((res) => {
             toast.success('Appointment cancelled successfully.');
@@ -25,8 +26,10 @@ const cancelAppointment = (id) => {
             appointments.forEach((appointment) => {
                 if (appointment.id === id && appointment.status !== 'Cancelled') {
                     appointment.status = 'Cancelled';
-                    document.querySelector(`.cancel-btn-${id}`).disabled = true;
-                    document.querySelector(`.cancel-btn-${id}`).textContent = 'Cancelled';
+                    // document.querySelector(`.cancel-btn-${id}`).disabled = true;
+                    // document.querySelector(`.cancel-btn-${id}`).textContent = 'Cancelled';
+                    $('.cancel-btn'+id).attr('disabled', 'disabled');
+                    $('.cancel-btn'+id).text('Cancelled');
                 }
             });
         })
@@ -35,13 +38,26 @@ const cancelAppointment = (id) => {
         });
 };
 
-const showGuests = (appointment) => {
-    guests.value = appointment.guest_invitations || [];
+const showGuests = (data) => {
+    guests.value = data || [];
 };
+
 onMounted(() => {
-    $('.cancel-button').on('click', function () {
+
+    $('.display').on('click', '.cancel-button', function () {
         cancelAppointment($(this).data('id'));
     })
+
+    // on click of the row, show the guests
+    $('.display').on('click', 'tr', function () {
+        // get the appointment
+        const appointment = appointments.find(appointment => appointment.id === $(this).find('button').data('id'));
+
+        // console.log(appointment.guest_invitations);
+        showGuests(appointment.guest_invitations);
+    });
+
+    // showGuests(appointments.find(appointment => appointment.id === $(this).data('id')));
 });
 </script>
 
@@ -57,10 +73,17 @@ onMounted(() => {
 
         <div class="py-12">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                <div>
+                    <p>
+                        <b>Scheduled: </b> {{ appointments.filter(appointment => appointment.status === 'Scheduled').length }}
+                        &nbsp;&nbsp;||&nbsp;&nbsp;
+                        <b>Cancelled: </b> {{appointments.filter(appointment => appointment.status === 'Cancelled').length }}<br>
+                    </p>
+                </div>
                 <DataTable :data="appointments" :columns="[
                     { title: 'Title', data: 'title' },
                     { title: 'Description', data: 'description' },
-                    { title: 'Appointment Time', data: 'date' },
+                    { title: 'Appointment Time', data: null, render: (data, type, row) => `${row.n} - ${row.t}` },
                     { title: 'TimeZone', data: 'timezone' },
                     { title: 'Status', data: 'status' },
                     { title: 'Actions', data: null, render: (data, type, row) => {
@@ -69,20 +92,15 @@ onMounted(() => {
                                 </button>`;
                     }}
                 ]" @row-click="showGuests" class="display">
-                    <tbody>
-
-                    <tr v-if="guests.length">
-                        <td colspan="6">
-                            <ul>
-                                <li><b>Guests</b></li>
-                                <li v-for="guest in guests" :key="guest.id">
-                                    {{ guest.name }} ({{ guest.email }})
-                                </li>
-                            </ul>
-                        </td>
-                    </tr>
-                    </tbody>
                 </DataTable>
+                <div v-if="guests.length">
+                    <ul>
+                        <li><b>Guests</b></li>
+                        <li v-for="guest in guests" :key="guest.id">
+                            {{ guest.name }} ({{ guest.email }})
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </AuthenticatedLayout>

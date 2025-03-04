@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('appointment_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->dateTime('reminder_time');
+            $table->string('reminder_time');
             $table->timestamps();
         });
     }

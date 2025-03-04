@@ -3,6 +3,8 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import {Head, useForm} from '@inertiajs/vue3';
 import { useToast } from 'vue-toastification';
 import { Inertia } from '@inertiajs/inertia';
+import {onMounted} from "vue";
+import $ from 'jquery';
 
 const toast = useToast();
 
@@ -13,6 +15,7 @@ const form = useForm({
     time: '',
     location: '',
     guests: [],
+    reminder: '',
 });
 
 const isWeekday = (date) => {
@@ -47,8 +50,8 @@ const submit = () => {
     });
 };
 
-const openDatePicker = () => {
-    document.getElementById('start_time').showPicker();
+const openDatePicker = (id) => {
+    document.getElementById(id).showPicker();
 };
 
 const addGuest = () => {
@@ -87,9 +90,15 @@ const removeGuest = (index) => {
                             <textarea v-model="form.description" id="description" class="mt-1 block w-full"></textarea>
 
                             <div class="mb-4">
-                                <label for="start_time" class="block text-sm font-medium text-gray-700">Appointment Date</label>
+                                <label for="start_time" class="block text-sm font-medium text-gray-700 picker">Appointment Date</label>
                                 <input v-model="form.appointment_date" type="datetime-local" id="start_time"
-                                       class="mt-1 block w-full" required @click="openDatePicker"/>
+                                       class="mt-1 block w-full" required @click="openDatePicker('start_time')"/>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="reminder" class="block text-sm font-medium text-gray-700 picker">Reminder</label>
+                                <input v-model="form.reminder" type="datetime-local" id="reminder"
+                                       class="mt-1 block w-full" @click="openDatePicker('reminder')"/>
                             </div>
 
                             <div v-for="(guest, index) in form.guests" :key="index" class="mb-4 flex space-x-4 items-center">
